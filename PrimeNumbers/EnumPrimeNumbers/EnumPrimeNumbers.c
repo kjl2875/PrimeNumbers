@@ -53,7 +53,8 @@ int impl(void)
 	FILE *fp;
 	unsigned long long int n = 2;
 	size_t c = 0;
-	size_t i = 0;
+	// size_t i = 0; // error C3016: 'i': OpenMP 'for' 문의 인덱스 변수는 부호 있는 정수 계열 형식이어야 합니다.
+	signed int i = 0;
 	unsigned long long int *m, *p;
 	int f, inturrpt = 0;
 	errno_t errno;
@@ -95,6 +96,7 @@ int impl(void)
 		}
 
 		f = 1;
+#pragma omp parallel for private(i)
 		for (i = 0; i<c; i++)
 			if (m[i] == n)
 			{
