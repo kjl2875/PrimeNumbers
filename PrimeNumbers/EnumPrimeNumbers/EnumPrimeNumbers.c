@@ -4,7 +4,7 @@
  * PrimeNumbers 순서대로 출력
  */
 
-#define IMPL_002
+#define IMPL_003
 
 #ifdef IMPL_001
 #include <stdio.h>
@@ -22,14 +22,176 @@
 #define MEMORY_MAX_ADDRESS (1024*1024*1024)
 #endif
 
-void impl(void);
+#ifdef IMPL_003
+#include <stdio.h>
+#include <stdlib.h>
+#include <conio.h>
+
+//#define MEMORY_MAX_ADDRESS ULLONG_MAX
+#define MEMORY_MAX_ADDRESS (1024*1024*1024)
+#endif
+
+#if defined IMPL_001
+	void impl(void);
+#elif defined IMPL_002
+	void impl(void);
+#elif defined IMPL_003
+	int impl(void);
+	errno_t loadFile(const size_t *const c, const unsigned long long int *const m, const unsigned long long int *const p);
+	errno_t saveFile(const size_t *const c, const unsigned long long int *const m, const unsigned long long int *const p);
+#endif
+
 
 int main()
 {
-	impl();
-	
+	return impl();
+}
+
+#ifdef IMPL_003
+int impl(void)
+{
+	FILE *fp;
+	unsigned long long int n = 2;
+	size_t c = 0;
+	size_t i = 0;
+	unsigned long long int *m, *p;
+	int f, inturrpt = 0;
+	errno_t errno;
+
+	m = malloc(sizeof(unsigned long long int) * MEMORY_MAX_ADDRESS - 1);
+	p = malloc(sizeof(unsigned long long int) * MEMORY_MAX_ADDRESS);
+	if (m == NULL || p == NULL)
+	{
+		printf("Error: Out of memory\n");
+		if( m != NULL ) free(m);
+		return 1;
+	}
+
+	printf("Check number: 'c'\n");
+	printf("Save to file: 's'\n");
+	printf("Load from file: 'l'\n");
+	printf("Exit program: 'e'\n");
+	printf("Program is running...\n");
+
+	while (c < MEMORY_MAX_ADDRESS && inturrpt == 0)
+	{
+		if (_kbhit())
+		{
+			switch (_getch())
+			{
+			case 'c':
+				printf("%llu\n", p[c - 1]);
+				break;
+			case 'e':
+				inturrpt = 1;
+				break;
+			case 's':
+				saveFile(&c, m ,p);
+				break;
+			case 'l':
+				loadFile(&c, m, p);
+				break;
+			}
+		}
+
+		f = 1;
+		for (i = 0; i<c; i++)
+			if (m[i] == n)
+			{
+				m[i] += p[i];
+				f = 0;
+			}
+
+		if (f)
+		{
+			p[c] = n;
+			m[c] = n + n;
+			++c;
+		}
+
+		n++;
+	}
+
+	printf("%llu\n", p[c-1]);
+	saveFile(&c, m, p);
+
+	free(m);
+	free(p);
+
 	return 0;
 }
+
+errno_t saveFile(const size_t *const c, const unsigned long long int *const m, const unsigned long long int *const p)
+{
+	char fpath[256];
+	FILE *fp;
+	size_t i;
+	errno_t errno;
+
+	printf("path: ");
+	gets_s(fpath, sizeof(char) * sizeof(fpath));
+	printf("path: %s: ", fpath);
+
+	switch (errno = fopen_s(&fp, fpath, "w"))
+	{
+	case 0:
+		fprintf_s(fp, "%llu\n", *c);
+
+		for (i = 0; i < *c; i++)
+			fprintf_s(fp, "%llu ", m[i]);
+		fputc('\n', fp);
+
+		for (i = 0; i < *c; i++)
+			fprintf_s(fp, "%llu ", p[i]);
+
+		printf("saved: %llu\n", p[*c - 1]);
+
+		if (fclose(fp) != 0)
+			printf("error: close file fail\n");
+
+		break;
+	default:
+		printf("error: save fail(%d)\n", errno);
+	}
+
+	return errno;
+}
+
+errno_t loadFile(const size_t *c, const unsigned long long int *m, const unsigned long long int *p)
+{
+	char fpath[256];
+	FILE *fp;
+	size_t i;
+	errno_t errno;
+
+	printf("path: ");
+	gets_s(fpath, sizeof(char) * sizeof(fpath));
+	printf("path: %s: ", fpath);
+
+	switch (errno = fopen_s(&fp, fpath, "r"))
+	{
+	case 0:
+		fscanf_s(fp, "%llu\n", c);
+
+		for (i = 0; i < *c; i++)
+			fscanf_s(fp, "%llu ", &m[i]);
+
+		for (i = 0; i < *c; i++)
+			fscanf_s(fp, "%llu ", &p[i]);
+
+		printf("loaded: %llu\n", p[*c - 1]);
+
+		if (fclose(fp) != 0)
+			printf("error: close file fail\n");
+
+		break;
+	default:
+		printf("error: load fail(%d)\n", errno);
+	}
+
+	return errno;
+}
+#endif
 
 #ifdef IMPL_002
 void impl(void)
