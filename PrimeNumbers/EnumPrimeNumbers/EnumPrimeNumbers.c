@@ -42,8 +42,8 @@
 #elif defined IMPL_003
 	int impl(void);
 	void uiHelp(void);
-	errno_t saveFile(const int *const n, const int *const c, const unsigned long long int *const m, const unsigned long long int *const p);
-	errno_t loadFile(const int *n, const int *c, const unsigned long long int *m, const unsigned long long int *p);
+	errno_t saveFile(const unsigned long long int *const n, const int *const c, const unsigned long long int *const m, const unsigned long long int *const p);
+	errno_t loadFile(const unsigned long long int *n, const int *c, const unsigned long long int *m, const unsigned long long int *p);
 #endif
 
 
@@ -155,7 +155,7 @@ void uiHelp(void)
 	printf("Program is running...\n");
 }
 
-errno_t saveFile(const int *const n, const int *const c, const unsigned long long int *const m, const unsigned long long int *const p)
+errno_t saveFile(const unsigned long long int *const n, const int *const c, const unsigned long long int *const m, const unsigned long long int *const p)
 {
 	char fpath[256];
 	FILE *fp;
@@ -169,7 +169,7 @@ errno_t saveFile(const int *const n, const int *const c, const unsigned long lon
 	switch (errno = fopen_s(&fp, fpath, "w"))
 	{
 	case 0:
-		fprintf_s(fp, "%d %d\n", *c, *n);
+		fprintf_s(fp, "%d %llu\n", *c, *n);
 
 		for (i = 0; i < *c; i++)
 			fprintf_s(fp, "%llu ", m[i]);
@@ -191,7 +191,7 @@ errno_t saveFile(const int *const n, const int *const c, const unsigned long lon
 	return errno;
 }
 
-errno_t loadFile(const int *n, const int *c, const unsigned long long int *m, const unsigned long long int *p)
+errno_t loadFile(const unsigned long long int *n, const int *c, const unsigned long long int *m, const unsigned long long int *p)
 {
 	char fpath[256];
 	FILE *fp;
@@ -205,7 +205,7 @@ errno_t loadFile(const int *n, const int *c, const unsigned long long int *m, co
 	switch (errno = fopen_s(&fp, fpath, "r"))
 	{
 	case 0:
-		fscanf_s(fp, "%d %d\n", c, n);
+		fscanf_s(fp, "%d %llu\n", c, n);
 
 		for (i = 0; i < *c; i++)
 			fscanf_s(fp, "%llu ", &m[i]);
