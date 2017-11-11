@@ -6,7 +6,7 @@
  * Windows Visual Studio 2015 Community Required
  */
 
-#define IMPL_003
+#define IMPL_001_1
 
 #ifdef IMPL_001
 #include <stdio.h>
@@ -35,6 +35,11 @@
 #define PREOGRAM_VERSION "1.0"
 #endif
 
+#ifdef IMPL_001_1
+#include <stdio.h>
+#include <stdlib.h>
+#endif
+
 #if defined IMPL_001
 	void impl(void);
 #elif defined IMPL_002
@@ -42,8 +47,10 @@
 #elif defined IMPL_003
 	int impl(void);
 	void uiHelp(void);
-	errno_t saveFile(const unsigned long long int *const n, const int *const c, const unsigned long long int *const m, const unsigned long long int *const p);
-	errno_t loadFile(const unsigned long long int *n, const int *c, const unsigned long long int *m, const unsigned long long int *p);
+	errno_t saveFile(const unsigned long long int *const n, const unsigned long long int *const c, const unsigned long long int *const m, const unsigned long long int *const p);
+	errno_t loadFile(const unsigned long long int *n, const unsigned long long int *c, const unsigned long long int *m, const unsigned long long int *p);
+#elif defined IMPL_001_1
+	int impl(void);
 #endif
 
 
@@ -53,16 +60,91 @@ int main()
 	return code;
 }
 
+#ifdef IMPL_001_1
+	#define NUM_FIELD_SIZE (1024)
+	#define	PNUM_FIELD_SIZE (1024 * 1024 * 1024)
+
+	typedef unsigned long long int numberic;
+
+	int impl(void)
+	{
+		numberic offset = 2;
+		numberic *numField;
+		numberic *pnumField, *pnumIdx;
+
+		size_t i;
+		size_t pnumCount = 0;
+		int fStop = 0;
+
+		numField = malloc(sizeof(numberic) * NUM_FIELD_SIZE);
+		pnumField = malloc(sizeof(numberic) * PNUM_FIELD_SIZE);
+		pnumIdx = malloc(sizeof(numberic) * PNUM_FIELD_SIZE);
+
+		if (numField == NULL || pnumField == NULL || pnumIdx == NULL)
+		{
+			printf("Error: out of memory.\n");
+			if (numField != NULL) free(numField);
+			if (pnumField != NULL) free(pnumField);
+			return 1;
+		}
+
+		while (!fStop)
+		{
+			for (i = 0; i < NUM_FIELD_SIZE; i++)
+				numField[i] = i + offset;
+
+			for (i = 0; i < pnumCount; i++)
+			{
+				pnumIdx[i] -= NUM_FIELD_SIZE;
+				while (pnumIdx[i] < NUM_FIELD_SIZE)
+				{
+					numField[pnumIdx[i]] = 0;
+					pnumIdx[i] += pnumField[i];
+				}
+			}
+
+			for (i = 0; i < NUM_FIELD_SIZE; i++)
+			{
+				if (numField[i] == 0)
+					continue;
+
+				printf("%llu\n", numField[i]);
+
+				pnumField[pnumCount] = numField[i];
+				pnumIdx[pnumCount] = i + numField[i] + numField[i];
+
+				while (pnumIdx[pnumCount] < NUM_FIELD_SIZE)
+				{
+					numField[pnumIdx[pnumCount]] = 0;
+					pnumIdx[pnumCount] += pnumField[pnumCount];
+				}
+
+				if (++pnumCount == PNUM_FIELD_SIZE)
+				{
+					fStop = 1;
+					break;
+				}
+			}
+
+			offset += NUM_FIELD_SIZE;
+		}
+
+		free(numField);
+		free(pnumField);
+		free(pnumIdx);
+		
+		return 0;
+	}
+#endif
+
 #ifdef IMPL_003
 
 int impl(void)
 {
 	FILE *fp;
 	unsigned long long int n = 2;
-	signed int c = 0;
-	// size_t c = 0;
-	// size_t i = 0; // error C3016: 'i': OpenMP 'for' 문의 인덱스 변수는 부호 있는 정수 계열 형식이어야 합니다.
-	signed int i = 0;
+	size_t c = 0;
+	size_t i = 0;
 	unsigned long long int *m, *p;
 	int f, inturrpt = 0;
 	errno_t errno;
@@ -92,21 +174,21 @@ int impl(void)
 			switch (_getch())
 			{
 			case 'c':
-				printf("%d Primes, Max number %llu\n", c, p[c - 1]);
+				printf("%llu Primes, Max number %llu\n", c, p[c - 1]);
 				break;
 			case 'e':
 				inturrpt = 1;
 				break;
 			case 's':
 				fflush(stdin);
-				printf("c: %d\nm[%d]: %llu\np[%d]: %llu\n", c, c-1, m[c - 1], c-1, p[c - 1]);
+				printf("c: %llu\nm[%llu]: %llu\np[%llu]: %llu\n", c, c-1, m[c - 1], c-1, p[c - 1]);
 				saveFile(&n, &c, m ,p);
 				break;
 			case 'l':
 				fflush(stdin);
-				printf("c: %d\nm[%d]: %llu\np[%d]: %llu\n", c, c - 1, m[c - 1], c - 1, p[c - 1]);
+				printf("c: %llu\nm[%llu]: %llu\np[%llu]: %llu\n", c, c - 1, m[c - 1], c - 1, p[c - 1]);
 				loadFile(&n, &c, m, p);
-				printf("c: %d\nm[%d]: %llu\np[%d]: %llu\n", c, c - 1, m[c - 1], c - 1, p[c - 1]);
+				printf("c: %llu\nm[%llu]: %llu\np[%llu]: %llu\n", c, c - 1, m[c - 1], c - 1, p[c - 1]);
 				continue;
 			case 'h':
 				uiHelp();
@@ -115,7 +197,6 @@ int impl(void)
 		}
 
 		f = 1;
-#pragma omp parallel for private(i)
 		for (i = 0; i<c; i++)
 			if (m[i] == n)
 			{
@@ -133,7 +214,7 @@ int impl(void)
 		n++;
 	}
 
-	if (c == INT_MAX)
+	if (c == UINT_MAX)
 		printf("Prime check number is maximun: %d\n", c);
 
 	printf("%llu\n", p[c-1]);
@@ -155,11 +236,11 @@ void uiHelp(void)
 	printf("Program is running...\n");
 }
 
-errno_t saveFile(const unsigned long long int *const n, const int *const c, const unsigned long long int *const m, const unsigned long long int *const p)
+errno_t saveFile(const unsigned long long int *const n, const unsigned long long int *const c, const unsigned long long int *const m, const unsigned long long int *const p)
 {
 	char fpath[256];
 	FILE *fp;
-	int i;
+	size_t i;
 	errno_t errno;
 
 	printf("path: ");
@@ -169,7 +250,7 @@ errno_t saveFile(const unsigned long long int *const n, const int *const c, cons
 	switch (errno = fopen_s(&fp, fpath, "w"))
 	{
 	case 0:
-		fprintf_s(fp, "%d %llu\n", *c, *n);
+		fprintf_s(fp, "%llu %llu\n", *c, *n);
 
 		for (i = 0; i < *c; i++)
 			fprintf_s(fp, "%llu ", m[i]);
@@ -191,11 +272,11 @@ errno_t saveFile(const unsigned long long int *const n, const int *const c, cons
 	return errno;
 }
 
-errno_t loadFile(const unsigned long long int *n, const int *c, const unsigned long long int *m, const unsigned long long int *p)
+errno_t loadFile(const unsigned long long int *n, const unsigned long long int *c, const unsigned long long int *m, const unsigned long long int *p)
 {
 	char fpath[256];
 	FILE *fp;
-	int i;
+	size_t i;
 	errno_t errno;
 
 	printf("path: ");
@@ -205,7 +286,7 @@ errno_t loadFile(const unsigned long long int *n, const int *c, const unsigned l
 	switch (errno = fopen_s(&fp, fpath, "r"))
 	{
 	case 0:
-		fscanf_s(fp, "%d %llu\n", c, n);
+		fscanf_s(fp, "%llu %llu\n", c, n);
 
 		for (i = 0; i < *c; i++)
 			fscanf_s(fp, "%llu ", &m[i]);
